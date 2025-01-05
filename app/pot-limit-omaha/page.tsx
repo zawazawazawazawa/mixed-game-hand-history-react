@@ -1,10 +1,14 @@
-import { FlopGameHandHistoryForm } from '@/components/FlopGameHandHistoryForm'
+import { PokerHandHistoryForm } from '@/components/PokerHandHistoryForm'
 import { GameLayout } from '@/components/GameLayout'
 
 export default function PotLimitOmahaPage() {
   return (
     <GameLayout>
-      <FlopGameHandHistoryForm gameName="Pot Limit Omaha" handSize={4} />
+      <PokerHandHistoryForm 
+        gameName="Pot Limit Omaha" 
+        handSize={4} 
+        game_type="flop" 
+      />
     </GameLayout>
   )
 }

@@ -12,7 +12,7 @@ import { ClipboardIcon, Share2Icon, Trash2Icon } from 'lucide-react'
 const suits = ['♠', '♥', '♦', '♣']
 const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
 
-const getPositions = (tableSize: number, isPreflop: boolean) => {
+const getPositions = (tableSize: number) => {
   const allPositions = ['UTG', 'UTG+1', 'UTG+2', 'UTG+3', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
   if (tableSize <= 5) {
     return allPositions.slice(-tableSize);
@@ -24,11 +24,13 @@ const getPositions = (tableSize: number, isPreflop: boolean) => {
     return ['UTG', 'UTG+1', 'UTG+2', 'MP', 'HJ', 'CO', 'BTN', 'SB'];
   } else if (tableSize === 9) {
     return ['UTG', 'UTG+1', 'UTG+2', 'UTG+3', 'MP', 'HJ', 'CO', 'BTN', 'SB'];
+  } else {
+    throw new Error('Invalid table size');
   }
 };
 
 const getPostFlopOrder = (tableSize: number) => {
-  const positions = getPositions(tableSize, false);
+  const positions = getPositions(tableSize);
   return [...positions.slice(-2), ...positions.slice(0, -2)];
 };
 
@@ -83,7 +85,7 @@ const getAvailableCards = (currentCards: Card[]) => {
   return {
     suits,
     ranks,
-    isAvailable: (suit: string, rank: string) => 
+    isAvailable: (suit: string, rank: string) =>
       !usedCards.some(card => card.suit === suit && card.rank === rank)
   };
 }
@@ -91,7 +93,7 @@ const getAvailableCards = (currentCards: Card[]) => {
 type PokerHandHistoryFormProps = {
   gameName: string
   handSize: number
-  isFixedLimit: boolean
+  isFixedLimit?: boolean
   game_type: 'flop' | 'draw' | 'stud'
   changeRoundCount?: number
   studSpecific?: boolean
@@ -114,7 +116,7 @@ const getActivePlayersAfterStreet = (actions: Action[]): string[] => {
 
 const getAvailableActions = (street: Action[], position: string, isPreflop: boolean): string[] => {
   const actions = ['Fold'];
-  const hasBetBefore = isPreflop || street.some((action, index) => 
+  const hasBetBefore = isPreflop || street.some((action) =>
     (action.position !== position && (action.action === 'Bet' || action.action === 'Raise'))
   );
 
@@ -128,7 +130,7 @@ const getAvailableActions = (street: Action[], position: string, isPreflop: bool
   return actions;
 };
 
-export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_type, changeRoundCount = 0, studSpecific = false }: PokerHandHistoryFormProps) {
+export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_type, changeRoundCount = 0 }: PokerHandHistoryFormProps) {
   const [handHistory, setHandHistory] = useState<HandHistory>({
     smallBlind: 0,
     bigBlind: 0,
@@ -136,21 +138,21 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
     tableSize: 6,
     position: '',
     hand: Array(handSize).fill({ suit: '', rank: '' }),
-    streets: game_type === 'flop' 
+    streets: game_type === 'flop'
       ? [
-          { actions: [], pot: 0 },
-          { actions: [], pot: 0, communityCards: [{ suit: '', rank: '' }, { suit: '', rank: '' }, { suit: '', rank: '' }] },
-          { actions: [], pot: 0, communityCards: [{ suit: '', rank: '' }] },
-          { actions: [], pot: 0, communityCards: [{ suit: '', rank: '' }] }
-        ]
+        { actions: [], pot: 0 },
+        { actions: [], pot: 0, communityCards: [{ suit: '', rank: '' }, { suit: '', rank: '' }, { suit: '', rank: '' }] },
+        { actions: [], pot: 0, communityCards: [{ suit: '', rank: '' }] },
+        { actions: [], pot: 0, communityCards: [{ suit: '', rank: '' }] }
+      ]
       : game_type === 'draw' ? [{ actions: [], pot: 0 }] :
-      [
-        { actions: [], pot: 0, playerCards: {} }, // 3rd Street
-        { actions: [], pot: 0, playerCards: {} }, // 4th Street
-        { actions: [], pot: 0, playerCards: {} }, // 5th Street
-        { actions: [], pot: 0, playerCards: {} }, // 6th Street
-        { actions: [], pot: 0, playerCards: {} }  // 7th Street
-      ],
+        [
+          { actions: [], pot: 0, playerCards: {} }, // 3rd Street
+          { actions: [], pot: 0, playerCards: {} }, // 4th Street
+          { actions: [], pot: 0, playerCards: {} }, // 5th Street
+          { actions: [], pot: 0, playerCards: {} }, // 6th Street
+          { actions: [], pot: 0, playerCards: {} }  // 7th Street
+        ],
     changeRounds: game_type === 'draw' ? Array(changeRoundCount).fill({ actions: [], discardedCards: [], drawnCards: [], pot: 0, playerChanges: {} }) : undefined,
     villainHands: [],
     villainPositions: [],
@@ -159,14 +161,14 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
     availableActions: {}
   })
 
-  const [activePlayers, setActivePlayers] = useState<string[]>([])
+  //const [activePlayers, setActivePlayers] = useState<string[]>([])
   const [formattedHistory, setFormattedHistory] = useState<string>('')
-  const [betRaiseCount, setBetRaiseCount] = useState({
-    0: 0,
-    1: 0,
-    2: 0,
-    3: 0
-  })
+  //const [betRaiseCount, setBetRaiseCount] = useState({
+  //  0: 0,
+  //  1: 0,
+  //  2: 0,
+  //  3: 0
+  //})
 
   useEffect(() => {
     if (gameName === "No Limit Texas Hold'em") {
@@ -177,12 +179,12 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
   }, [gameName, handHistory.bigBlind]);
 
   useEffect(() => {
-    const positions = getPositions(handHistory.tableSize, true);
-    setActivePlayers(positions);
+    const positions = getPositions(handHistory.tableSize);
+    //setActivePlayers(positions);
     setHandHistory(prev => {
       const newHistory = {
         ...prev,
-        streets: prev.streets.map((street, index) => 
+        streets: prev.streets.map((street, index) =>
           index === 0 ? { ...street, actions: positions.map(pos => ({ position: pos, action: '', amount: 0 })) } : street
         ),
         availableActions: Object.fromEntries(positions.map(pos => [pos, getAvailableActions([], pos, true)])),
@@ -199,8 +201,8 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
     const { name, value } = e.target
     const newValue = Number(value)
     setHandHistory(prev => {
-      const newHistory = { 
-        ...prev, 
+      const newHistory = {
+        ...prev,
         [name]: newValue,
         position: name === 'tableSize' ? '' : prev.position
       };
@@ -241,16 +243,16 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
     return validSuits.includes(suit) && validRanks.includes(rank);
   };
 
-  const calculateLastRaiseAmount = (actions: Action[]): number => {
-    let lastRaise = 0;
-    for (let i = actions.length - 1; i >= 0; i--) {
-      if (actions[i].action === 'Bet' || actions[i].action === 'Raise') {
-        lastRaise = actions[i].amount || 0;
-        break;
-      }
-    }
-    return lastRaise;
-  }
+  //const calculateLastRaiseAmount = (actions: Action[]): number => {
+  //  let lastRaise = 0;
+  //  for (let i = actions.length - 1; i >= 0; i--) {
+  //    if (actions[i].action === 'Bet' || actions[i].action === 'Raise') {
+  //      lastRaise = actions[i].amount || 0;
+  //      break;
+  //    }
+  //  }
+  //  return lastRaise;
+  //}
 
   const getBetAmount = (streetIndex: number): number => {
     if (!isFixedLimit) return 0;
@@ -270,7 +272,7 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
         newActions = [...(newHistory.streets[streetIndex]?.actions || [])];
       }
 
-      let newAmount = newActions[index]?.amount;
+      let newAmount = newActions[index]?.amount || 0;
 
       if (field === 'action') {
         if (value === 'Call') {
@@ -279,10 +281,10 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
         } else if (value === 'Bet' || value === 'Raise') {
           if (isFixedLimit) {
             newAmount = getBetAmount(streetIndex);
-            setBetRaiseCount(prevCount => ({
-              ...prevCount,
-              [streetIndex]: prevCount[streetIndex] + 1
-            }));
+            //setBetRaiseCount(prevCount => ({
+            //  ...prevCount,
+            //  [streetIndex]: prevCount[streetIndex] + 1
+            //}));
           } else {
             newAmount = 0;
           }
@@ -306,10 +308,35 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
         newHistory.currentBet = newAmount;
       }
 
-      // 全プレイヤーの利用可能なアクションを更新
-      const updatedAvailableActions = {};
+      type AvailableActions = {
+        UTG: string[],
+        UTG1: string[],
+        UTG2: string[],
+        UTG3: string[],
+        MP: string[],
+        HJ: string[],
+        CO: string[],
+        BTN: string[],
+        SB: string[],
+        BB: string[]
+      }
+
+      const updatedAvailableActions: AvailableActions = {
+        UTG: [],
+        UTG1: [],
+        UTG2: [],
+        UTG3: [],
+        MP: [],
+        HJ: [],
+        CO: [],
+        BTN: [],
+        SB: [],
+        BB: []
+      };
+
       (game_type === 'draw' && newHistory.changeRounds ? newHistory.changeRounds[streetIndex].actions : newHistory.streets[streetIndex].actions).forEach((action, i) => {
-        updatedAvailableActions[action.position] = getAvailableActions((game_type === 'draw' && newHistory.changeRounds ? newHistory.changeRounds[streetIndex].actions : newHistory.streets[streetIndex].actions).slice(0, i), action.position, streetIndex === 0);
+        const targetAction: keyof AvailableActions = action.position as keyof AvailableActions;
+        updatedAvailableActions[targetAction] = getAvailableActions((game_type === 'draw' && newHistory.changeRounds ? newHistory.changeRounds[streetIndex].actions : newHistory.streets[streetIndex].actions).slice(0, i), action.position, streetIndex === 0);
       });
       newHistory.availableActions = updatedAvailableActions;
 
@@ -335,7 +362,7 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
       }
 
       const activePositions = getActivePlayersAfterStreet(allActions);
-      const positions = streetIndex === 0 ? getPositions(newHistory.tableSize, true) : getPostFlopOrder(newHistory.tableSize);
+      const positions = streetIndex === 0 ? getPositions(newHistory.tableSize) : getPostFlopOrder(newHistory.tableSize);
       const orderedActivePositions = positions.filter(pos => activePositions.includes(pos));
 
       const newAction = {
@@ -372,7 +399,7 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
   const handleDeleteAction = (index: number, streetIndex: number) => {
     setHandHistory(prev => {
       const newHistory = { ...prev };
-      
+
       if (game_type === 'draw' && newHistory.changeRounds) {
         newHistory.changeRounds[streetIndex].actions = newHistory.changeRounds[streetIndex]?.actions.filter((_, i) => i !== index) || [];
       } else {
@@ -479,11 +506,11 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
       'All In': 'AI'
     };
 
-    const streetNames = game_type === 'draw' 
+    const streetNames = game_type === 'draw'
       ? ['Pre-Draw', ...Array(changeRoundCount).fill('').map((_, i) => `Draw ${i + 1}`), 'Showdown']
       : game_type === 'flop'
-      ? ['Preflop', 'Flop', 'Turn', 'River']
-      : ['Pre-Flop', '3rd Street', '4th Street', '5th Street', '6th Street', '7th Street'];
+        ? ['Preflop', 'Flop', 'Turn', 'River']
+        : ['Pre-Flop', '3rd Street', '4th Street', '5th Street', '6th Street', '7th Street'];
 
     history.streets.forEach((street, index) => {
       formatted += `${streetNames[index]}:\n`;
@@ -617,7 +644,7 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
     });
   };
 
-  const handleCardChange = (cardIndex: number, field: 'suit' | 'rank', value: string, cardType: 'hand' | 'communityCards' | 'drawnCards' | 'playerCards', streetIndex?: number, position?: string, roundIndex?: number) => {
+  const handleCardChange = (cardIndex: number, field: 'suit' | 'rank', value: string, cardType: 'hand' | 'communityCards' | 'drawnCards' | 'playerCards', streetIndex?: number, roundIndex?: number) => {
     setHandHistory(prev => {
       const newHistory = { ...prev };
       if (cardType === 'hand') {
@@ -629,11 +656,12 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
       } else if (cardType === 'drawnCards' && newHistory.changeRounds) {
         newHistory.changeRounds[roundIndex!].drawnCards[cardIndex] = { ...newHistory.changeRounds[roundIndex!].drawnCards[cardIndex], [field]: value };
       } else if (game_type === 'stud' && cardType === 'playerCards') {
-        newHistory.streets[streetIndex!].playerCards[position!] = newHistory.streets[streetIndex!].playerCards[position!] || [];
-        newHistory.streets[streetIndex!].playerCards[position!][cardIndex] = {
-          ...newHistory.streets[streetIndex!].playerCards[position!][cardIndex],
-          [field]: value
-        };
+        // TODO: Implement playerCards for stud games
+        //newHistory.streets[streetIndex!].playerCards[position!] = newHistory.streets[streetIndex!].playerCards[position!] || [];
+        //newHistory.streets[streetIndex!].playerCards[position!][cardIndex] = {
+        //  ...newHistory.streets[streetIndex!].playerCards[position!][cardIndex],
+        //  [field]: value
+        //};
       }
       return newHistory;
     });
@@ -644,139 +672,289 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
     <div className="space-y-8 max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold">{gameName}</h1>
       <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Table Information</h2>
-            <div className="flex flex-col space-y-4">
-              <div>
-                <Label htmlFor="smallBlind">Small Blind</Label>
-                <Input type="number" id="smallBlind" name="smallBlind" value={handHistory.smallBlind} onChange={handleInputChange} min={0} onFocus={(e) => e.target.value === '0' && e.target.select()}/>
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold">Table Information</h2>
+          <div className="flex flex-col space-y-4">
+            <div>
+              <Label htmlFor="smallBlind">Small Blind</Label>
+              <Input type="number" id="smallBlind" name="smallBlind" value={handHistory.smallBlind} onChange={handleInputChange} min={0} onFocus={(e) => e.target.value === '0' && e.target.select()} />
+            </div>
+            <div>
+              <Label htmlFor="bigBlind">Big Blind</Label>
+              <Input type="number" id="bigBlind" name="bigBlind" value={handHistory.bigBlind} onChange={handleInputChange} min={0} onFocus={(e) => e.target.value === '0' && e.target.select()} readOnly />
+            </div>
+            <div>
+              <Label htmlFor="ante">BB Ante</Label>
+              <div className="flex space-x-2">
+                <Input
+                  type="number"
+                  id="ante"
+                  name="ante"
+                  value={handHistory.ante}
+                  onChange={(e) => {
+                    const newValue = Number(e.target.value);
+                    setHandHistory(prev => ({
+                      ...prev,
+                      ante: newValue
+                    }));
+                  }}
+                  min={0}
+                  onFocus={(e) => e.target.value === '0' && e.target.select()}
+                />
+                <Button type="button" onClick={setAnteEqualToBB}>Set Equal to BB</Button>
               </div>
-              <div>
-                <Label htmlFor="bigBlind">Big Blind</Label>
-                <Input type="number" id="bigBlind" name="bigBlind" value={handHistory.bigBlind} onChange={handleInputChange} min={0} onFocus={(e) => e.target.value === '0' && e.target.select()} readOnly />
+            </div>
+            <div>
+              <Label htmlFor="effectiveStack">Effective Stack</Label>
+              <Input type="number" id="effectiveStack" name="effectiveStack" value={handHistory.effectiveStack} onChange={handleInputChange} min={0} onFocus={(e) => e.target.value === '0' && e.target.select()} />
+            </div>
+            {isFixedLimit && (
+              <>
+                <div>
+                  <Label>Small Bet</Label>
+                  <div className="text-lg font-semibold">{handHistory.bigBlind}</div>
+                </div>
+                <div>
+                  <Label>Big Bet</Label>
+                  <div className="text-lg font-semibold">{handHistory.bigBlind * 2}</div>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="flex flex-col space-y-4">
+            <div>
+              <Label htmlFor="tableSize">Table Size</Label>
+              <Input type="number" id="tableSize" name="tableSize" value={handHistory.tableSize} onChange={handleInputChange} min={2} max={9} onFocus={(e) => e.target.value === '0' && e.target.select()} />
+            </div>
+            <div>
+              <Label htmlFor="position">Your Position</Label>
+              <Select onValueChange={(value) => handleSelectChange('position', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Position" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getPositions(handHistory.tableSize).map((pos) => (
+                    <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold">Your Hand</h2>
+          <div>
+            <Label htmlFor="hand">Enter your cards (e.g. AsKh, JcTd)</Label>
+            <Input
+              id="hand"
+              placeholder="Enter cards (e.g. AsKh, JcTd)"
+              value={handHistory.hand.map(card => `${card.rank}${card.suit}`).join('')}
+              onChange={(e) => handleHandChange(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {handHistory.streets.map((street, streetIndex) => (
+          <div key={streetIndex} className="space-y-4">
+            <h2 className="text-2xl font-bold">
+              {game_type === 'stud'
+                ? (streetIndex === 0 ? '3rd Street' :
+                  streetIndex === 1 ? '4th Street' :
+                    streetIndex === 2 ? '5th Street' :
+                      streetIndex === 3 ? '6th Street' :
+                        '7th Street')
+                : (game_type === 'draw'
+                  ? (streetIndex === 0 ? 'Pre-Draw' : `Draw ${streetIndex}`)
+                  : (streetIndex === 0 ? 'Preflop' : streetIndex === 1 ? 'Flop' : streetIndex === 2 ? 'Turn' : 'River'))}
+            </h2>
+            {game_type === 'flop' && streetIndex > 0 && (
+              <div className="space-y-4">
+                <Label htmlFor={`communityCards-${streetIndex}`}>Community Cards</Label>
+                {streetIndex === 1 ? (
+                  <div className="flex flex-col space-y-2">
+                    {[0, 1, 2].map((index) => (
+                      <div key={index}>
+                        <Input
+                          id={`communityCards-${streetIndex}-${index}`}
+                          placeholder="Enter cards (e.g. AsKh, JcTd)"
+                          value={street.communityCards?.[index] ? `${street.communityCards[index].rank}${street.communityCards[index].suit}` : ''}
+                          onChange={(e) => {
+                            const newValue = e.target.value;
+                            handleCommunityCardsChange(
+                              street.communityCards?.map((card, i) =>
+                                i === index ? newValue : `${card.rank}${card.suit}`
+                              ).join('') || newValue,
+                              streetIndex
+                            );
+                          }}
+                          maxLength={2}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <Input
+                    id={`communityCards-${streetIndex}`}
+                    placeholder="Enter community card (e.g. As)"
+                    value={street.communityCards?.map(card => `${card.rank}${card.suit}`).join('') || ''}
+                    onChange={(e) => handleCommunityCardsChange(e.target.value, streetIndex)}
+                    maxLength={2}
+                  />
+                )}
               </div>
-              <div>
-                <Label htmlFor="ante">BB Ante</Label>
-                <div className="flex space-x-2">
+            )}
+            {street.actions.map((action, index) => (
+              <div key={index} className="flex flex-col space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label>{action.position}</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteAction(index, streetIndex)}
+                  >
+                    <Trash2Icon className="h-4 w-4" />
+                  </Button>
+                </div>
+                <RadioGroup
+                  onValueChange={(value) => handleActionChange(index, 'action', value, streetIndex)}
+                  value={action.action}
+                >
+                  <div className="flex flex-wrap gap-4">
+                    {handHistory.availableActions[action.position]?.map((act) => (
+                      <div key={act} className="flex items-center space-x-2">
+                        <RadioGroupItem value={act} id={`${streetIndex}-${index}-${act}`} />
+                        <Label htmlFor={`${streetIndex}-${index}-${act}`}>{act}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </RadioGroup>
+                {(action.action === 'Bet' || action.action === 'Raise' || action.action === 'Call' || action.action === 'All In') && (
                   <Input
                     type="number"
-                    id="ante"
-                    name="ante"
-                    value={handHistory.ante}
-                    onChange={(e) => {
-                      const newValue = Number(e.target.value);
-                      setHandHistory(prev => ({
-                        ...prev,
-                        ante: newValue
-                      }));
-                    }}
+                    placeholder="Amount"
+                    value={action.amount !== undefined ? action.amount : ''}
+                    onChange={(e) => handleActionChange(index, 'amount', Number(e.target.value), streetIndex)}
                     min={0}
+                    disabled={(action.action === 'Call' && !isFixedLimit) || (isFixedLimit && action.action !== 'All In')}
                     onFocus={(e) => e.target.value === '0' && e.target.select()}
                   />
-                  <Button type="button" onClick={setAnteEqualToBB}>Set Equal to BB</Button>
-                </div>
+                )}
               </div>
-              <div>
-                <Label htmlFor="effectiveStack">Effective Stack</Label>
-                <Input type="number" id="effectiveStack" name="effectiveStack" value={handHistory.effectiveStack} onChange={handleInputChange} min={0} onFocus={(e) => e.target.value === '0' && e.target.select()}/>
-              </div>
-              {isFixedLimit && (
-                <>
-                  <div>
-                    <Label>Small Bet</Label>
-                    <div className="text-lg font-semibold">{handHistory.bigBlind}</div>
-                  </div>
-                  <div>
-                    <Label>Big Bet</Label>
-                    <div className="text-lg font-semibold">{handHistory.bigBlind * 2}</div>
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="flex flex-col space-y-4">
-              <div>
-                <Label htmlFor="tableSize">Table Size</Label>
-                <Input type="number" id="tableSize" name="tableSize" value={handHistory.tableSize} onChange={handleInputChange} min={2} max={9} onFocus={(e) => e.target.value === '0' && e.target.select()}/>
-              </div>
-              <div>
-                <Label htmlFor="position">Your Position</Label>
-                <Select onValueChange={(value) => handleSelectChange('position', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Position" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getPositions(handHistory.tableSize, true).map((pos) => (
-                      <SelectItem key={pos} value={pos}>{pos}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Your Hand</h2>
-            <div>
-              <Label htmlFor="hand">Enter your cards (e.g. AsKh, JcTd)</Label>
-              <Input
-                id="hand"
-                placeholder="Enter cards (e.g. AsKh, JcTd)"
-                value={handHistory.hand.map(card => `${card.rank}${card.suit}`).join('')}
-                onChange={(e) => handleHandChange(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {handHistory.streets.map((street, streetIndex) => (
-            <div key={streetIndex} className="space-y-4">
-              <h2 className="text-2xl font-bold">
-                {game_type === 'stud'
-                  ? (streetIndex === 0 ? '3rd Street' : 
-                     streetIndex === 1 ? '4th Street' : 
-                     streetIndex === 2 ? '5th Street' : 
-                     streetIndex === 3 ? '6th Street' : 
-                     '7th Street')
-                  : (game_type === 'draw'
-                    ? (streetIndex === 0 ? 'Pre-Draw' : `Draw ${streetIndex}`)
-                    : (streetIndex === 0 ? 'Preflop' : streetIndex === 1 ? 'Flop' : streetIndex === 2 ? 'Turn' : 'River'))}
-              </h2>
-              {game_type === 'flop' && streetIndex > 0 && (
-                <div className="space-y-4">
-                  <Label htmlFor={`communityCards-${streetIndex}`}>Community Cards</Label>
-                  {streetIndex === 1 ? (
-                    <div className="flex flex-col space-y-2">
-                      {[0, 1, 2].map((index) => (
-                        <div key={index}>
-                          <Input
-                            id={`communityCards-${streetIndex}-${index}`}
-                            placeholder="Enter cards (e.g. AsKh, JcTd)"
-                            value={street.communityCards?.[index] ? `${street.communityCards[index].rank}${street.communityCards[index].suit}` : ''}
-                            onChange={(e) => {
-                              const newValue = e.target.value;
-                              handleCommunityCardsChange(
-                                street.communityCards?.map((card, i) => 
-                                  i === index ? newValue : `${card.rank}${card.suit}`
-                                ).join('') || newValue,
-                                streetIndex
-                              );
-                            }}
-                            maxLength={2}
-                          />
+            ))}
+            <Button type="button" onClick={() => handleStreetActions(streetIndex)}>Add Action</Button>
+            <div>Pot: {street.pot}</div>
+            {game_type === 'stud' && (
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold">Player Cards</h3>
+                {Object.entries(street.playerCards || {}).map(([position, cards]) => (
+                  <div key={position} className="space-y-2">
+                    <Label>{position}</Label>
+                    <div className="flex space-x-2">
+                      {cards.map((card, cardIndex) => (
+                        <div key={cardIndex} className="flex space-x-2">
+                          <Select onValueChange={(value) => handleCardChange(cardIndex, 'suit', value, 'playerCards', streetIndex)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Suit" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getAvailableCards(getAllCards()).suits.map((suit) => (
+                                <SelectItem key={suit} value={suit} disabled={!getAvailableCards(getAllCards()).isAvailable(suit, card.rank)}>
+                                  {suit}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select onValueChange={(value) => handleCardChange(cardIndex, 'rank', value, 'playerCards', streetIndex)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Rank" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getAvailableCards(getAllCards()).ranks.map((rank) => (
+                                <SelectItem key={rank} value={rank} disabled={!getAvailableCards(getAllCards()).isAvailable(card.suit, rank)}>
+                                  {rank}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <Input
-                      id={`communityCards-${streetIndex}`}
-                      placeholder="Enter community card (e.g. As)"
-                      value={street.communityCards?.map(card => `${card.rank}${card.suit}`).join('') || ''}
-                      onChange={(e) => handleCommunityCardsChange(e.target.value, streetIndex)}
-                      maxLength={2}
-                    />
-                  )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+
+        {game_type === 'draw' && handHistory.changeRounds && handHistory.changeRounds.map((round, roundIndex) => (
+          <div key={roundIndex} className="space-y-4">
+            <h2 className="text-2xl font-bold">Change Round {roundIndex + 1}</h2>
+            <div className="space-y-2">
+              <h3 className="text-xl font-semibold">Player Changes</h3>
+              {Object.entries(round.playerChanges).map(([position, count]) => (
+                <div key={position} className="flex items-center space-x-2">
+                  <Label>{position}</Label>
+                  <Input
+                    type="number"
+                    value={count}
+                    onChange={(e) => handlePlayerChangeCount(position, Number(e.target.value), roundIndex)}
+                    min={0}
+                    max={handSize}
+                  />
                 </div>
-              )}
-              {street.actions.map((action, index) => (
+              ))}
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-semibold">Discard Cards</h3>
+              {handHistory.hand.map((card, cardIndex) => (
+                <div key={cardIndex} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`discard-${roundIndex}-${cardIndex}`}
+                    onCheckedChange={(checked) => handleDiscardCardChange(cardIndex, checked as boolean, roundIndex)}
+                  />
+                  <Label htmlFor={`discard-${roundIndex}-${cardIndex}`}>
+                    {card.suit}{card.rank}
+                  </Label>
+                </div>
+              ))}
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-semibold">Drawn Cards</h3>
+              {round.drawnCards.map((card, cardIndex) => (
+                <div key={cardIndex} className="flex space-x-2">
+                  <Select onValueChange={(value) => handleCardChange(cardIndex, 'suit', value, 'drawnCards', undefined, roundIndex)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Suit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getAvailableCards(getAllCards()).suits.map((suit) => (
+                        <SelectItem key={suit} value={suit} disabled={!getAvailableCards(getAllCards()).isAvailable(suit, card.rank)}>
+                          {suit}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select onValueChange={(value) => handleCardChange(cardIndex, 'rank', value, 'drawnCards', undefined, roundIndex)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Rank" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getAvailableCards(getAllCards()).ranks.map((rank) => (
+                        <SelectItem key={rank} value={rank} disabled={!getAvailableCards(getAllCards()).isAvailable(card.suit, rank)}>
+                          {rank}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+              <Button type="button" onClick={() => handleAddDrawnCard(roundIndex)}>Add Drawn Card</Button>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-semibold">Betting Round</h3>
+              {round.actions.map((action, index) => (
                 <div key={index} className="flex flex-col space-y-2">
                   <div className="flex justify-between items-center">
                     <Label>{action.position}</Label>
@@ -784,20 +962,20 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
                       type="button"
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleDeleteAction(index, streetIndex)}
+                      onClick={() => handleDeleteAction(index, roundIndex)}
                     >
                       <Trash2Icon className="h-4 w-4" />
                     </Button>
                   </div>
                   <RadioGroup
-                    onValueChange={(value) => handleActionChange(index, 'action', value, streetIndex)}
+                    onValueChange={(value) => handleActionChange(index, 'action', value, roundIndex)}
                     value={action.action}
                   >
                     <div className="flex flex-wrap gap-4">
                       {handHistory.availableActions[action.position]?.map((act) => (
                         <div key={act} className="flex items-center space-x-2">
-                          <RadioGroupItem value={act}id={`${streetIndex}-${index}-${act}`} />
-                          <Label htmlFor={`${streetIndex}-${index}-${act}`}>{act}</Label>
+                          <RadioGroupItem value={act} id={`changeRound-${roundIndex}-${index}-${act}`} />
+                          <Label htmlFor={`changeRound-${roundIndex}-${index}-${act}`}>{act}</Label>
                         </div>
                       ))}
                     </div>
@@ -807,211 +985,61 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
                       type="number"
                       placeholder="Amount"
                       value={action.amount !== undefined ? action.amount : ''}
-                      onChange={(e) => handleActionChange(index, 'amount', Number(e.target.value), streetIndex)}
+                      onChange={(e) => handleActionChange(index, 'amount', Number(e.target.value), roundIndex)}
                       min={0}
-                      disabled={(action.action === 'Call' && !isFixedLimit) || (isFixedLimit && action.action !== 'AllIn')}
+                      disabled={(action.action === 'Call' && !isFixedLimit) || (isFixedLimit && action.action !== 'All In')}
                       onFocus={(e) => e.target.value === '0' && e.target.select()}
                     />
                   )}
                 </div>
               ))}
-              <Button type="button" onClick={() => handleStreetActions(streetIndex)}>Add Action</Button>
-              <div>Pot: {street.pot}</div>
-              {game_type === 'stud' && (
-                <div className="space-y-4">
-                  <h3 className="text-xl font-semibold">Player Cards</h3>
-                  {Object.entries(street.playerCards || {}).map(([position, cards]) => (
-                    <div key={position} className="space-y-2">
-                      <Label>{position}</Label>
-                      <div className="flex space-x-2">
-                        {cards.map((card, cardIndex) => (
-                          <div key={cardIndex} className="flex space-x-2">
-                            <Select onValueChange={(value) => handleCardChange(cardIndex, 'suit', value, 'playerCards', streetIndex, position)}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Suit" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {getAvailableCards(getAllCards()).suits.map((suit) => (
-                                  <SelectItem key={suit} value={suit} disabled={!getAvailableCards(getAllCards()).isAvailable(suit, card.rank)}>
-                                    {suit}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Select onValueChange={(value) => handleCardChange(cardIndex, 'rank', value, 'playerCards', streetIndex, position)}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Rank" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {getAvailableCards(getAllCards()).ranks.map((rank) => (
-                                  <SelectItem key={rank} value={rank} disabled={!getAvailableCards(getAllCards()).isAvailable(card.suit, rank)}>
-                                    {rank}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <Button type="button" onClick={() => handleStreetActions(roundIndex)}>Add Action</Button>
             </div>
-          ))}
-
-          {game_type === 'draw' && handHistory.changeRounds && handHistory.changeRounds.map((round, roundIndex) => (
-            <div key={roundIndex} className="space-y-4">
-              <h2 className="text-2xl font-bold">Change Round {roundIndex + 1}</h2>
-              <div className="space-y-2">
-                <h3 className="text-xl font-semibold">Player Changes</h3>
-                {Object.entries(round.playerChanges).map(([position, count]) => (
-                  <div key={position} className="flex items-center space-x-2">
-                    <Label>{position}</Label>
-                    <Input
-                      type="number"
-                      value={count}
-                      onChange={(e) => handlePlayerChangeCount(position, Number(e.target.value), roundIndex)}
-                      min={0}
-                      max={handSize}
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-xl font-semibold">Discard Cards</h3>
-                {handHistory.hand.map((card, cardIndex) => (
-                  <div key={cardIndex} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`discard-${roundIndex}-${cardIndex}`}
-                      onCheckedChange={(checked) => handleDiscardCardChange(cardIndex, checked as boolean, roundIndex)}
-                    />
-                    <Label htmlFor={`discard-${roundIndex}-${cardIndex}`}>
-                      {card.suit}{card.rank}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-xl font-semibold">Drawn Cards</h3>
-                {round.drawnCards.map((card, cardIndex) => (
-                  <div key={cardIndex} className="flex space-x-2">
-                    <Select onValueChange={(value) => handleCardChange(cardIndex, 'suit', value, 'drawnCards', undefined, undefined, roundIndex)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Suit" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getAvailableCards(getAllCards()).suits.map((suit) => (
-                          <SelectItem key={suit} value={suit} disabled={!getAvailableCards(getAllCards()).isAvailable(suit, card.rank)}>
-                            {suit}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select onValueChange={(value) => handleCardChange(cardIndex, 'rank', value, 'drawnCards', undefined, undefined, roundIndex)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Rank" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getAvailableCards(getAllCards()).ranks.map((rank) => (
-                          <SelectItem key={rank} value={rank} disabled={!getAvailableCards(getAllCards()).isAvailable(card.suit, rank)}>
-                            {rank}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
-                <Button type="button" onClick={() => handleAddDrawnCard(roundIndex)}>Add Drawn Card</Button>
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-xl font-semibold">Betting Round</h3>
-                {round.actions.map((action, index) => (
-                  <div key={index} className="flex flex-col space-y-2">
-                    <div className="flex justify-between items-center">
-                      <Label>{action.position}</Label>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteAction(index, roundIndex)}
-                      >
-                        <Trash2Icon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <RadioGroup
-                      onValueChange={(value) => handleActionChange(index, 'action', value, roundIndex)}
-                      value={action.action}
-                    >
-                      <div className="flex flex-wrap gap-4">
-                        {handHistory.availableActions[action.position]?.map((act) => (
-                          <div key={act} className="flex items-center space-x-2">
-                            <RadioGroupItem value={act} id={`changeRound-${roundIndex}-${index}-${act}`} />
-                            <Label htmlFor={`changeRound-${roundIndex}-${index}-${act}`}>{act}</Label>
-                          </div>
-                        ))}
-                      </div>
-                    </RadioGroup>
-                    {(action.action === 'Bet' || action.action === 'Raise' || action.action === 'Call' || action.action === 'All In') && (
-                      <Input
-                        type="number"
-                        placeholder="Amount"
-                        value={action.amount !== undefined ? action.amount : ''}
-                        onChange={(e) => handleActionChange(index, 'amount', Number(e.target.value), roundIndex)}
-                        min={0}
-                        disabled={(action.action === 'Call' && !isFixedLimit) || (isFixedLimit && action.action !== 'All In')}
-                        onFocus={(e) => e.target.value === '0' && e.target.select()}
-                      />
-                    )}
-                  </div>
-                ))}
-                <Button type="button" onClick={() => handleStreetActions(roundIndex)}>Add Action</Button>
-              </div>
-              <div>Pot: {round.pot}</div>
-            </div>
-          ))}
-
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Villain Hands</h2>
-            {handHistory.villainHands.map((hand, handIndex) => (
-              <div key={handIndex} className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Label>Villain Position</Label>
-                  <Select 
-                    value={handHistory.villainPositions[handIndex]} 
-                    onValueChange={(value) => {
-                      handleVillainPositionChange(handIndex, value);
-                      document.activeElement instanceof HTMLElement && document.activeElement.blur();
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Position">
-                        {handHistory.villainPositions[handIndex]}
-                      </SelectValue>                    
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getAvailablePositions().map((pos) => (
-                        <SelectItem key={pos} value={pos}>{pos}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor={`villainHand-${handIndex}`}>Villain Hand</Label>
-                  <Input
-                    id={`villainHand-${handIndex}`}
-                    placeholder="Enter cards (e.g. AsKh, JcTd)"
-                    value={hand.map(card => `${card.rank}${card.suit}`).join('')}
-                    onChange={(e) => handleVillainHandChange(e.target.value, handIndex)}
-                  />
-                </div>
-              </div>
-            ))}
-            <Button type="button" onClick={addVillainHand}>Add Villain Hand</Button>
+            <div>Pot: {round.pot}</div>
           </div>
+        ))}
 
-          <Button type="submit">Save Hand History</Button>
-        </form>
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold">Villain Hands</h2>
+          {handHistory.villainHands.map((hand, handIndex) => (
+            <div key={handIndex} className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Label>Villain Position</Label>
+                <Select
+                  value={handHistory.villainPositions[handIndex]}
+                  onValueChange={(value) => {
+                    handleVillainPositionChange(handIndex, value);
+                    //document.activeElement instanceof HTMLElement && document.activeElement.blur();
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Position">
+                      {handHistory.villainPositions[handIndex]}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getAvailablePositions().map((pos) => (
+                      <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor={`villainHand-${handIndex}`}>Villain Hand</Label>
+                <Input
+                  id={`villainHand-${handIndex}`}
+                  placeholder="Enter cards (e.g. AsKh, JcTd)"
+                  value={hand.map(card => `${card.rank}${card.suit}`).join('')}
+                  onChange={(e) => handleVillainHandChange(e.target.value, handIndex)}
+                />
+              </div>
+            </div>
+          ))}
+          <Button type="button" onClick={addVillainHand}>Add Villain Hand</Button>
+        </div>
+
+        <Button type="submit">Save Hand History</Button>
+      </form>
       {formattedHistory && (
         <div className="mt-8">
           <div className="flex justify-between items-center mb-4">
