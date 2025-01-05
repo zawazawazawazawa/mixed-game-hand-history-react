@@ -1,15 +1,16 @@
 import { PokerHandHistoryForm } from '@/components/PokerHandHistoryForm'
 import { GameLayout } from '@/components/GameLayout'
 
-export default function Home() {
+export default function RazzPage() {
   return (
     <GameLayout>
       <PokerHandHistoryForm 
-        gameName="No Limit Texas Hold'em" 
-        handSize={2} 
-        game_type="flop" 
+        gameName="Razz" 
+        handSize={7} 
+        isFixedLimit={true} 
+        game_type="stud" 
+        studSpecific={true}
       />
-
     </GameLayout>
   )
 }

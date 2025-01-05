@@ -1,15 +1,16 @@
 import { PokerHandHistoryForm } from '@/components/PokerHandHistoryForm'
 import { GameLayout } from '@/components/GameLayout'
 
-export default function Home() {
+export default function TripleDrawPage() {
   return (
     <GameLayout>
       <PokerHandHistoryForm 
-        gameName="No Limit Texas Hold'em" 
-        handSize={2} 
-        game_type="flop" 
+        gameName="Limit 2-7 Triple Draw" 
+        handSize={5} 
+        isFixedLimit={true} 
+        game_type="draw" 
+        changeRoundCount={3}
       />
-
     </GameLayout>
   )
 }

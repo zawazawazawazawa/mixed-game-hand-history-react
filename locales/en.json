@@ -1,0 +1,70 @@
+{
+  "gameName": {
+    "noLimitHoldem": "No Limit Texas Hold'em",
+    "razz": "Razz",
+    "badugi": "Badugi",
+    "limitHoldem": "Limit Texas Hold'em",
+    "sevenCardStud": "7 Card Stud High",
+    "nl27SingleDraw": "No Limit 2-7 Single Draw",
+    "flOmahaHiLo": "Fixed Limit Omaha High Low Eight or Better",
+    "potLimitOmaha": "Pot Limit Omaha",
+    "tripleDrawLowball": "2-7 Triple Draw",
+    "studHiLo": "Stud High Low Eight or Better"
+  },
+  "sidebar": {
+    "title": "Game List"
+  },
+  "tableInfo": {
+    "title": "Table Information",
+    "smallBlind": "Small Blind",
+    "bigBlind": "Big Blind",
+    "ante": "Ante",
+    "complete": "Complete",
+    "bigBet": "Big Bet",
+    "bbAnte": "BB Ante",
+    "tableSize": "Table Size",
+    "position": "Your Position",
+    "setEqualToBB": "Set Equal to BB"
+  },
+  "streets": {
+    "preflop": "Preflop",
+    "flop": "Flop",
+    "turn": "Turn",
+    "river": "River",
+    "thirdStreet": "3rd Street",
+    "fourthStreet": "4th Street",
+    "fifthStreet": "5th Street",
+    "sixthStreet": "6th Street",
+    "seventhStreet": "7th Street"
+  },
+  "actions": {
+    "fold": "Fold",
+    "check": "Check",
+    "call": "Call",
+    "bet": "Bet",
+    "raise": "Raise",
+    "allIn": "All-In"
+  },
+  "cards": {
+    "suit": "Suit",
+    "rank": "Rank",
+    "yourHand": "Your Hand"
+  },
+  "buttons": {
+    "addAction": "Add {{street}} Action",
+    "addOpponentHand": "Add Opponent's Hand",
+    "saveHandHistory": "Save Hand History"
+  },
+  "misc": {
+    "opponent": "Opponent",
+    "pot": "{{street}} Pot",
+    "selectPosition": "Select Position",
+    "selectAction": "Select Action",
+    "amount": "Amount"
+  },
+  "language": {
+    "en": "English",
+    "ja": "日本語"
+  }
+}
+
