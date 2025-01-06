@@ -32,8 +32,8 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
       >
         {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
       </Button>
-      <div className={`fixed inset-y-0 left-0 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} w-80 bg-gray-100 transition-transform duration-300 ease-in-out z-40 md:translate-x-0 md:static md:w-80 md:h-screen`}>
-        <div className="h-full overflow-y-auto p-4 pt-16 md:pt-4">
+      <div className={`bg-[#d3d3d3] fixed inset-y-0 left-0 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} w-80 transition-transform duration-300 ease-in-out z-40 md:translate-x-0 md:static md:w-80 md:h-screen`}>
+        <div className="h-full overflow-y-auto p-4 pt-16 md:pt-4 ">
           <h2 className="text-xl font-bold mb-4">Game List</h2>
           <nav>
             <ul className="space-y-2">
