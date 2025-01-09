@@ -40,7 +40,11 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
               {games.map((game, index) => (
                 <li key={index}>
                   <Link href={game.path} passHref>
-                    <Button variant="ghost" className="w-full justify-start text-left whitespace-normal h-auto py-2">
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start text-left whitespace-normal h-auto py-2"
+                      onClick={onToggle}
+                    >
                       {game.name}
                     </Button>
                   </Link>
@@ -53,4 +57,3 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
     </>
   )
 }
-
