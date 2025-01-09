@@ -1055,7 +1055,7 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
               </Button>
             </div>
           </div>
-          <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
+          <pre className="bg-[#f5f5f5] p-4 rounded-md overflow-x-auto">
             <code>{formattedHistory}</code>
           </pre>
         </div>
