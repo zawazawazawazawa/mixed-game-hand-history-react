@@ -1042,9 +1042,9 @@ export function PokerHandHistoryForm({ gameName, handSize, isFixedLimit, game_ty
       </form>
       {formattedHistory && (
         <div className="mt-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold">Formatted Hand History</h2>
-            <div className="space-x-2">
+                    <div className="space-y-4 mb-4">
+                  <h2 className="text-2xl font-bold">Formatted Hand History</h2>
+                  <div className="flex gap-4">
               <Button onClick={copyToClipboard} className="flex items-center gap-2">
                 <ClipboardIcon className="w-4 h-4" />
                 Copy
