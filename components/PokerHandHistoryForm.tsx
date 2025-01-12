@@ -411,9 +411,6 @@ export function PokerHandHistoryForm({
         amount: newAmount,
       };
 
-      console.log("newActions: ", newActions);
-      console.log("newHistory: ", newHistory);
-
       if (game_type === "draw" && newHistory.changeRounds) {
         newHistory.changeRounds[streetIndex].actions = newActions;
       } else {
@@ -422,8 +419,6 @@ export function PokerHandHistoryForm({
       if (value === "Bet" || value === "Raise") {
         newHistory.currentBet = newAmount;
       }
-
-      console.log("newHistory: ", newHistory);
 
       type AvailableActions = {
         UTG: string[];
@@ -488,7 +483,6 @@ export function PokerHandHistoryForm({
   const handleStreetActions = (streetIndex: number) => {
     setHandHistory((prev) => {
       const newHistory = { ...prev };
-      console.log("prevHistory: ", newHistory);
 
       let allActions: Action[];
 
@@ -507,26 +501,28 @@ export function PokerHandHistoryForm({
         activePositions.includes(pos)
       );
 
+      const existingActions =
+        game_type === "draw" && newHistory.changeRounds
+          ? newHistory.changeRounds[streetIndex].actions
+          : newHistory.streets[streetIndex].actions;
+
       const newActions = orderedActivePositions.map((pos) => ({
         position: pos,
         action: "",
         amount: 0,
       }));
 
+      console.log("newActions", newActions);
+      console.log("existingActions", existingActions);
+
+      const combinedActions = [...existingActions, ...newActions];
+
       if (game_type === "draw" && newHistory.changeRounds) {
-        newHistory.changeRounds[streetIndex].actions = [
-          ...(newHistory.changeRounds[streetIndex]?.actions || []),
-          ...newActions,
-        ];
+        newHistory.changeRounds[streetIndex].actions = combinedActions;
       } else {
-        newHistory.streets[streetIndex].actions = [
-          ...(newHistory.streets[streetIndex]?.actions || []),
-          ...newActions,
-        ];
+        newHistory.streets[streetIndex].actions = combinedActions;
       }
 
-      console.log("newActions: ", newActions);
-      console.log("newHistory: ", newHistory);
       // activeなプレイヤーごとにavailableActionsを更新
       orderedActivePositions.forEach((pos) => {
         const availableActions = getAvailableActions(
@@ -627,7 +623,6 @@ export function PokerHandHistoryForm({
     e.preventDefault();
     const formatted = formatHandHistory(handHistory);
     setFormattedHistory(formatted);
-    console.log(handHistory);
   };
 
   const setAnteEqualToBB = () => {
@@ -1175,9 +1170,17 @@ export function PokerHandHistoryForm({
                   </Button>
                 </div>
                 <RadioGroup
-                  onValueChange={(value) =>
-                    handleActionChange(index, "action", value, streetIndex)
-                  }
+                  onValueChange={(value) => {
+                    console.log(
+                      "handHistory before handleActionChange",
+                      handHistory
+                    );
+                    handleActionChange(index, "action", value, streetIndex);
+                    console.log(
+                      "handHistory after handleActionChange",
+                      handHistory
+                    );
+                  }}
                   value={action.action}
                 >
                   <div className="flex flex-wrap gap-4">
@@ -1224,7 +1227,14 @@ export function PokerHandHistoryForm({
             ))}
             <Button
               type="button"
-              onClick={() => handleStreetActions(streetIndex)}
+              onClick={(e) => {
+                e.preventDefault();
+                console.log(
+                  "handHistory before handleStreetActions",
+                  handHistory
+                );
+                handleStreetActions(streetIndex);
+              }}
             >
               Add Action
             </Button>
