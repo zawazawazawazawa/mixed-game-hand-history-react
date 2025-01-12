@@ -136,11 +136,11 @@ const getActivePlayersAfterStreet = (actions: Action[]): string[] => {
 const getAvailableActions = (
   street: Action[],
   position: string,
-  isPreflop: boolean
+  beforeActionStart?: boolean
 ): string[] => {
   const actions = ["Fold"];
   const hasBetBefore =
-    isPreflop ||
+    beforeActionStart ||
     street.some(
       (action) =>
         action.position !== position &&
@@ -168,7 +168,7 @@ export function PokerHandHistoryForm({
     smallBlind: 0,
     bigBlind: 0,
     ante: 0,
-    tableSize: 6,
+    tableSize: 3, //6,
     position: "",
     heroHands: Array(handSize).fill({ suit: "", rank: "" }),
     streets:
@@ -411,6 +411,9 @@ export function PokerHandHistoryForm({
         amount: newAmount,
       };
 
+      console.log("newActions: ", newActions);
+      console.log("newHistory: ", newHistory);
+
       if (game_type === "draw" && newHistory.changeRounds) {
         newHistory.changeRounds[streetIndex].actions = newActions;
       } else {
@@ -419,6 +422,8 @@ export function PokerHandHistoryForm({
       if (value === "Bet" || value === "Raise") {
         newHistory.currentBet = newAmount;
       }
+
+      console.log("newHistory: ", newHistory);
 
       type AvailableActions = {
         UTG: string[];
@@ -483,6 +488,8 @@ export function PokerHandHistoryForm({
   const handleStreetActions = (streetIndex: number) => {
     setHandHistory((prev) => {
       const newHistory = { ...prev };
+      console.log("prevHistory: ", newHistory);
+
       let allActions: Action[];
 
       if (game_type === "draw" && newHistory.changeRounds) {
@@ -500,38 +507,54 @@ export function PokerHandHistoryForm({
         activePositions.includes(pos)
       );
 
-      const newAction = {
-        position: orderedActivePositions[0],
+      const newActions = orderedActivePositions.map((pos) => ({
+        position: pos,
         action: "",
         amount: 0,
-      };
+      }));
 
       if (game_type === "draw" && newHistory.changeRounds) {
         newHistory.changeRounds[streetIndex].actions = [
           ...(newHistory.changeRounds[streetIndex]?.actions || []),
-          newAction,
+          ...newActions,
         ];
       } else {
         newHistory.streets[streetIndex].actions = [
           ...(newHistory.streets[streetIndex]?.actions || []),
-          newAction,
+          ...newActions,
         ];
       }
 
-      // 新しいアクションの利用可能なアクションを計算
-      const availableActions = getAvailableActions(
-        game_type === "draw" && newHistory.changeRounds
-          ? newHistory.changeRounds[streetIndex].actions
-          : newHistory.streets[streetIndex].actions,
-        newAction.position,
-        streetIndex === 0
-      );
+      console.log("newActions: ", newActions);
+      console.log("newHistory: ", newHistory);
+      // activeなプレイヤーごとにavailableActionsを更新
+      orderedActivePositions.forEach((pos) => {
+        const availableActions = getAvailableActions(
+          (game_type === "draw" && newHistory.changeRounds
+            ? newHistory.changeRounds[streetIndex].actions
+            : newHistory.streets[streetIndex].actions
+          ).filter((a) => a.position === pos),
+          pos
+        );
+        newHistory.availableActions = {
+          ...newHistory.availableActions,
+          [pos]: availableActions,
+        };
+      });
 
-      // availableActionsを更新
-      newHistory.availableActions = {
-        ...newHistory.availableActions,
-        [newAction.position]: availableActions,
-      };
+      //const availableActions = getAvailableActions(
+      //  game_type === "draw" && newHistory.changeRounds
+      //    ? newHistory.changeRounds[streetIndex].actions
+      //    : newHistory.streets[streetIndex].actions,
+      //  newAction.position,
+      //  streetIndex === 0
+      //);
+
+      //// availableActionsを更新
+      //newHistory.availableActions = {
+      //  ...newHistory.availableActions,
+      //  [newAction.position]: availableActions,
+      //};
 
       return newHistory;
     });
@@ -824,41 +847,41 @@ export function PokerHandHistoryForm({
     });
   };
 
-  const handleCommunityCardsChange = (value: string, streetIndex: number) => {
-    const cards = value.match(/.{1,2}/g) || [];
-    console.log(cards);
-    const newCommunityCards = cards.map((card) => ({
-      rank: card[0] || "",
-      suit: card[1] || "",
-    }));
+  // const handleCommunityCardsChange = (value: string, streetIndex: number) => {
+  //   const cards = value.match(/.{1,2}/g) || [];
+  //   console.log(cards);
+  //   const newCommunityCards = cards.map((card) => ({
+  //     rank: card[0] || "",
+  //     suit: card[1] || "",
+  //   }));
 
-    setHandHistory((prev) => {
-      const newStreets = [...prev.streets];
-      newStreets[streetIndex] = {
-        ...newStreets[streetIndex],
-        communityCards: newCommunityCards,
-      };
-      return { ...prev, streets: newStreets };
-    });
-  };
+  //   setHandHistory((prev) => {
+  //     const newStreets = [...prev.streets];
+  //     newStreets[streetIndex] = {
+  //       ...newStreets[streetIndex],
+  //       communityCards: newCommunityCards,
+  //     };
+  //     return { ...prev, streets: newStreets };
+  //   });
+  // };
 
-  const handleCommunityCardsBlur = (value: string, streetIndex: number) => {
-    const cards = value.match(/.{1,2}/g) || [];
-    const validatedCards = cards.map((card) => {
-      const rank = card[0]?.toUpperCase();
-      const suit = card[1]?.toLowerCase();
-      return isValidCard(rank, suit) ? { rank, suit } : { rank: "", suit: "" };
-    });
+  // const handleCommunityCardsBlur = (value: string, streetIndex: number) => {
+  //   const cards = value.match(/.{1,2}/g) || [];
+  //   const validatedCards = cards.map((card) => {
+  //     const rank = card[0]?.toUpperCase();
+  //     const suit = card[1]?.toLowerCase();
+  //     return isValidCard(rank, suit) ? { rank, suit } : { rank: "", suit: "" };
+  //   });
 
-    setHandHistory((prev) => {
-      const newStreets = [...prev.streets];
-      newStreets[streetIndex] = {
-        ...newStreets[streetIndex],
-        communityCards: validatedCards,
-      };
-      return { ...prev, streets: newStreets };
-    });
-  };
+  //   setHandHistory((prev) => {
+  //     const newStreets = [...prev.streets];
+  //     newStreets[streetIndex] = {
+  //       ...newStreets[streetIndex],
+  //       communityCards: validatedCards,
+  //     };
+  //     return { ...prev, streets: newStreets };
+  //   });
+  // };
 
   const handleVillainHandChange = (value: string, handIndex: number) => {
     const cards = value.match(/.{1,2}/g) || [];
