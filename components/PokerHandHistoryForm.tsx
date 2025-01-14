@@ -839,24 +839,24 @@ export function PokerHandHistoryForm({
     });
   };
 
-  const handleVillainHandChange = (value: string, handIndex: number) => {
-    const cards = value.match(/.{1,2}/g) || [];
-    const newHand = cards.map((card) => {
-      const rank = card[0]?.toUpperCase();
-      const suit = card[1]?.toLowerCase();
-      // return isValidCard(rank, suit) ? { rank, suit } : { rank: '', suit: '' };
+  // const handleVillainHandChange = (value: string, handIndex: number) => {
+  //   const cards = value.match(/.{1,2}/g) || [];
+  //   const newHand = cards.map((card) => {
+  //     const rank = card[0]?.toUpperCase();
+  //     const suit = card[1]?.toLowerCase();
+  //     // return isValidCard(rank, suit) ? { rank, suit } : { rank: '', suit: '' };
 
-      return { rank, suit };
-    });
+  //     return { rank, suit };
+  //   });
 
-    setHandHistory((prev) => {
-      const newVillainHands = [...prev.villainHands];
-      newVillainHands[handIndex] = newHand.concat(
-        Array(handSize - newHand.length).fill({ rank: "", suit: "" })
-      );
-      return { ...prev, villainHands: newVillainHands };
-    });
-  };
+  //   setHandHistory((prev) => {
+  //     const newVillainHands = [...prev.villainHands];
+  //     newVillainHands[handIndex] = newHand.concat(
+  //       Array(handSize - newHand.length).fill({ rank: "", suit: "" })
+  //     );
+  //     return { ...prev, villainHands: newVillainHands };
+  //   });
+  // };
 
   const handleCardChange = (
     cardIndex: number,
@@ -1509,45 +1509,63 @@ export function PokerHandHistoryForm({
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor={`villainHand-${handIndex}`}>Villain Hand</Label>
-                <Input
-                  id={`villainHand-${handIndex}`}
-                  placeholder="Enter cards (e.g. AsKh, JcTd)"
-                  value={hand
-                    .map((card) => `${card.rank}${card.suit}`)
-                    .join("")}
-                  onChange={(e) =>
-                    handleVillainHandChange(e.target.value, handIndex)
-                  }
-                  onBlur={(e) => {
-                    const value = e.target.value;
-                    const cards = value.match(/.{1,2}/g) || [];
-                    const validatedCards = cards.map((card) => {
-                      const rank = card[0]?.toUpperCase();
-                      const suit = card[1]?.toLowerCase();
-                      return isValidCard(rank, suit)
-                        ? { rank, suit }
-                        : { rank: "", suit: "" };
-                    });
-                    setHandHistory((prev) => {
-                      const newVillainHands = [...prev.villainHands];
-                      newVillainHands[handIndex] = validatedCards.concat(
-                        Array(handSize - validatedCards.length).fill({
-                          rank: "",
-                          suit: "",
-                        })
-                      );
-                      return { ...prev, villainHands: newVillainHands };
-                    });
-                  }}
-                />
+              <div className="space-y-2">
+                <Label>Villain Hand</Label>
+                {Array.from({ length: handSize }).map((_, cardIndex) => (
+                  <div key={cardIndex}>
+                    <Input
+                      id={`villainHand-${handIndex}-${cardIndex}`}
+                      placeholder="Enter card (e.g. As, Kh)"
+                      value={`${hand[cardIndex]?.rank}${hand[cardIndex]?.suit}`}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const newRank = value[0]?.toUpperCase();
+                        const newSuit = value[1]?.toLowerCase();
+                        setHandHistory((prev) => {
+                          const newVillainHands = [...prev.villainHands];
+                          newVillainHands[handIndex][cardIndex] = {
+                            rank: newRank,
+                            suit: newSuit,
+                          };
+                          return { ...prev, villainHands: newVillainHands };
+                        });
+                      }}
+                      onBlur={(e) => {
+                        const value = e.target.value;
+                        const rank = value[0]?.toUpperCase();
+                        const suit = value[1]?.toLowerCase();
+                        if (!isValidCard(rank, suit)) {
+                          setHandHistory((prev) => {
+                            const newVillainHands = [...prev.villainHands];
+                            newVillainHands[handIndex][cardIndex] = {
+                              rank: "",
+                              suit: "",
+                            };
+                            return { ...prev, villainHands: newVillainHands };
+                          });
+                          const newErrorMessages = [
+                            ...villainHandErrorMessages,
+                          ];
+                          newErrorMessages[handIndex] =
+                            "Invalid card input. Please enter valid cards (e.g. As, Kh).";
+                          setVillainHandErrorMessages(newErrorMessages);
+                        } else {
+                          const newErrorMessages = [
+                            ...villainHandErrorMessages,
+                          ];
+                          newErrorMessages[handIndex] = "";
+                          setVillainHandErrorMessages(newErrorMessages);
+                        }
+                      }}
+                    />
+                    {villainHandErrorMessages[handIndex] && (
+                      <p className="text-red-500">
+                        {villainHandErrorMessages[handIndex]}
+                      </p>
+                    )}
+                  </div>
+                ))}
               </div>
-              {villainHandErrorMessages[handIndex] && (
-                <p className="text-red-500">
-                  {villainHandErrorMessages[handIndex]}
-                </p>
-              )}
             </div>
           ))}
           <Button
